@@ -193,6 +193,7 @@ This project follows structured testing processes adapted for Agile:
 - **[Test Plan](TEST_PLAN.md)**: Defines scope, strategy, and risk management (RBT).
 - **Risk Register**: Documented analysis of technical risks (e.g., Canvas testing) and mitigation strategies.
 - **Traceability**: All tests map directly to Gherkin Feature files, ensuring 100% requirement coverage.
+- **[Engineering Report](ENGINEERING_REPORT.md)**: Detailed log of technical challenges (Mobile Viewports, API Mismatches) and solutions.
 
 
 ## 📝 License
