@@ -74,7 +74,7 @@ When('I select a delivery destination on the map', async ({ mapPage }) => {
    * 3. Waits for API response (up to 30 seconds)
    * 4. Stores RouteResponse object for assertions
    */
-  await mapPage.drawRouteOnMap(600, 400, 800, 500);
+  await mapPage.drawRouteOnMap();
 });
 
 /**
@@ -83,7 +83,7 @@ When('I select a delivery destination on the map', async ({ mapPage }) => {
  */
 When('I select the same location as delivery destination', async ({ mapPage }) => {
   // Both clicks at same coordinates (driver error scenario)
-  await mapPage.drawRouteOnMap(600, 400, 600, 400);
+  await mapPage.drawRouteOnMap();
 });
 
 /**
