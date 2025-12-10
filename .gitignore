@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+.build/
+dist/
+
+# Test results
+test-results/
+playwright-report/
+allure-results/
+allure-report/
+
+# Playwright auto-generated files
+playwright/.cache/
+.playwright/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.test
+
+# Screenshots and videos from failed tests
+screenshots/
+videos/
+traces/

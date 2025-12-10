@@ -1,0 +1,78 @@
+{
+  "compilerOptions": {
+    /**
+     * STRICT MODE: Catch errors at compile time, not runtime
+     * Production frameworks should fail fast during development
+     */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+
+    /**
+     * ES2022: Modern JavaScript features
+     * Playwright supports latest Node.js LTS
+     */
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+
+    /**
+     * MODULE RESOLUTION: Node.js style imports
+     */
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /**
+     * OUTPUT: Compiled JS goes to .build directory
+     * Keeps source and compiled code separate
+     */
+    "outDir": ".build",
+    "rootDir": ".",
+
+    /**
+     * SOURCE MAPS: Enable debugging in VS Code
+     * Jump to TypeScript source, not compiled JS
+     */
+    "sourceMap": true,
+    "inlineSourceMap": false,
+
+    /**
+     * CODE QUALITY: Additional checks
+     */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /**
+     * PLAYWRIGHT TYPES: Auto-import test, expect, etc.
+     */
+    "types": ["node", "@playwright/test"],
+
+    /**
+     * SKIP LIB CHECK: Speed up compilation
+     * We trust node_modules types are correct
+     */
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*",
+    "playwright.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".build",
+    "playwright-report",
+    "allure-results",
+    "allure-report",
+    "test-results"
+  ]
+}

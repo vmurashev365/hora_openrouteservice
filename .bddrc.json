@@ -1,0 +1,5 @@
+{
+  "$schema": "https://vitalets.github.io/playwright-bdd/configuration/schema.json",
+  "outputDir": ".features-gen",
+  "importTestFrom": "src/fixtures/test.ts"
+}
