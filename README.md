@@ -2,7 +2,7 @@
 
 ## 🎯 Project Overview
 
-This is a **production-ready Test Automation Framework** demonstrating modern Playwright practices for testing map-based logistics applications. Built for a Senior QA Automation interview at HORA Services.
+This is a **production-ready Test Automation Framework** demonstrating modern Playwright practices for testing map-based logistics applications. 
 
 ### Key Features
 - ✅ **BDD with Gherkin**: Business-readable test scenarios
@@ -106,43 +106,6 @@ npm run report:allure
 
 ---
 
-## 🎓 Interview Talking Points
-
-### 1. Why API Interception for Maps?
-**Interviewer**: "How do you test Canvas elements?"
-
-**Answer**: 
-> "I use Gray Box Testing. The map canvas can't be queried with CSS selectors, so I intercept the routing API call (`POST /v2/directions/`) and assert the response data. This is 100x more stable than pixel-based image comparison and validates the actual data drivers need—distance, duration, and coordinates."
-
-**Code Reference**: `src/pages/MapPage.ts` → `waitForRouteCalculation()`
-
----
-
-### 2. Why iPhone 13 + Pixel 5?
-**Interviewer**: "Why test on iPhone specifically?"
-
-**Answer**:
-> "HORA operates in the US market where iOS has 57%+ market share among drivers. iPhone 13 uses WebKit (Safari), which has different touch events and viewport behavior than Chromium. I added Pixel 5 for Android coverage. This test matrix reflects real-world user demographics."
-
-**Code Reference**: `playwright.config.ts` → `projects[]`
-
----
-
-### 3. Why BDD with playwright-bdd?
-**Interviewer**: "Why not just use describe/it blocks?"
-
-**Answer**:
-> "BDD bridges the gap between business stakeholders and technical teams. Product managers can read `routing.feature` and understand what's being tested without reading code. `playwright-bdd` generates real Playwright tests from Gherkin, unlike Cucumber which adds complexity. This keeps tests maintainable and business-aligned."
-
-**Code Reference**: `src/features/routing.feature` + `src/steps/routing.steps.ts`
-
----
-
-### 4. Explain the Fixture Pattern
-**Interviewer**: "What's the benefit of your fixture setup?"
-
-**Answer**:
-> "Fixtures are Playwright's Dependency Injection system. Without them, every test would instantiate `new MapPage(page)` manually, leading to duplication. With fixtures, page objects are auto-initialized and injected into tests. This follows SOLID principles—tests depend on abstractions, not concrete implementations. Adding new page objects (e.g., `DriverDashboard`) requires zero changes to existing tests."
 
 **Code Reference**: `src/fixtures/test.ts`
 
