@@ -223,15 +223,14 @@ This is a demo framework. In production, I'd add:
 
 ---
 
-## 📞 Contact
+## 📚 Documentation & Process (ISTQB Aligned)
 
-**Demo Author**: [Your Name]  
-**Role**: Senior QA Automation Engineer  
-**Target Company**: HORA Services  
+This project follows structured testing processes adapted for Agile:
 
-**Interview Date**: [To Be Scheduled]
+- **[Test Plan](TEST_PLAN.md)**: Defines scope, strategy, and risk management (RBT).
+- **Risk Register**: Documented analysis of technical risks (e.g., Canvas testing) and mitigation strategies.
+- **Traceability**: All tests map directly to Gherkin Feature files, ensuring 100% requirement coverage.
 
----
 
 ## 📝 License
 
