@@ -64,24 +64,34 @@ When('I select a pickup location on the map', async ({ mapPage }) => {
  * - Second click triggers route calculation
  * - Network interception captures the API response
  * - We store the response for validation in Then steps
+ * 
+ * IMPORTANT: Pickup location was already selected in previous step.
+ * This step only clicks the delivery destination (no double-click bug).
  */
 When('I select a delivery destination on the map', async ({ mapPage }) => {
   /**
-   * drawRouteOnMap() internally:
+   * clickDeliveryAndWaitForRoute() internally:
    * 1. Sets up response listener for POST /v2/directions/
-   * 2. Performs the second click (triggers route calculation)
+   * 2. Performs ONLY the delivery click (pickup was done in previous step)
    * 3. Waits for API response (up to 30 seconds)
    * 4. Stores RouteResponse object for assertions
    */
-  await mapPage.drawRouteOnMap();
+  await mapPage.clickDeliveryAndWaitForRoute();
 });
 
 /**
  * EDGE CASE STEP: Same start and end location
  * Production systems must handle invalid user inputs gracefully
+ * 
+ * NOTE: Uses drawRouteOnMap() which performs BOTH clicks at same coordinates.
+ * This is intentional for this edge case - we want to test same start/end behavior.
  */
 When('I select the same location as delivery destination', async ({ mapPage }) => {
-  // Both clicks at same coordinates (driver error scenario)
+  /**
+   * drawRouteOnMap() performs both pickup and delivery clicks.
+   * For this edge case, both clicks happen at the same coordinates,
+   * simulating a driver error (selecting same location twice).
+   */
   await mapPage.drawRouteOnMap();
 });
 

@@ -90,15 +90,57 @@ export class MapPage {
   }
 
   /**
-   * 🖱️ Adaptive Click Strategy
+   * 🖱️ Click Delivery and Wait for Route
+   * 
+   * IMPORTANT: Assumes pickup location was already selected via clickPickupLocation().
+   * This method only clicks the delivery destination and waits for route calculation.
+   * 
+   * USE CASE:
+   * - Step-by-step route selection (pickup first, then delivery)
+   * - Standard BDD scenarios where each step is explicit
+   * 
+   * @example
+   * await mapPage.clickPickupLocation();
+   * await mapPage.clickDeliveryAndWaitForRoute();
+   */
+  async clickDeliveryAndWaitForRoute(): Promise<void> {
+    const viewport = this.page.viewportSize();
+    if (!viewport) throw new Error('Viewport not defined');
+
+    console.log(`📱 Completing route on ${viewport.width}x${viewport.height} viewport`);
+
+    const routePromise = this.waitForRouteCalculation();
+
+    await this.page.waitForTimeout(MapPage.TIMING.CLICK_DEBOUNCE);
+    await this.clickDeliveryDestination();
+    
+    // Wait for result
+    this.routeResponse = await routePromise;
+  }
+
+  /**
+   * 🖱️ Full Route Drawing (Both Clicks)
+   * 
+   * Performs BOTH pickup and delivery clicks in a single method call.
    * Calculates click points relative to the device screen size (Viewport).
    * Works on iPhone SE, Pixel 5, and 4K Monitors.
+   * 
+   * USE CASE:
+   * - Edge case scenarios (e.g., same start/end point)
+   * - Quick route drawing without step-by-step selection
+   * - Backward compatibility with existing code
+   * 
+   * NOTE: For standard scenarios, prefer clickPickupLocation() + clickDeliveryAndWaitForRoute()
+   * to avoid accidental double-clicking.
+   * 
+   * @example
+   * await mapPage.drawRouteOnMap(); // Does both clicks
    */
   async drawRouteOnMap(): Promise<void> {
     const viewport = this.page.viewportSize();
     if (!viewport) throw new Error('Viewport not defined');
 
-    console.log(`📱 Adaptive Interaction: ${viewport.width}x${viewport.height}`);
+    console.log(`📱 Full route drawing on ${viewport.width}x${viewport.height} viewport`);
 
     const routePromise = this.waitForRouteCalculation();
 
