@@ -7,6 +7,7 @@ This is a **production-ready Test Automation Framework** demonstrating modern Pl
 ### Key Features
 - ✅ **BDD with Gherkin**: Business-readable test scenarios
 - ✅ **Multi-Device Testing**: iPhone 13 (Safari/WebKit) + Pixel 5 (Chrome) + Desktop
+- ✅ **Test Pyramid Architecture**: API tests + UI tests (not just UI)
 - ✅ **Gray Box Testing**: API interception for Canvas/Map element stability
 - ✅ **Dependency Injection**: Clean test architecture with fixtures
 - ✅ **TypeScript Strict Mode**: Catch errors at compile time
@@ -42,11 +43,15 @@ This is a **production-ready Test Automation Framework** demonstrating modern Pl
 hora_openrouteservice/
 ├── src/
 │   ├── features/
-│   │   └── routing.feature          # BDD scenarios in business language
+│   │   ├── routing.feature          # BDD scenarios in business language (UI tests)
+│   │   └── api-routing.feature      # API-only tests (no UI)
 │   ├── steps/
-│   │   └── routing.steps.ts         # Step definitions (Gherkin → Code)
+│   │   ├── routing.steps.ts         # Step definitions (Gherkin → Code)
+│   │   └── api-routing.steps.ts    # API test step definitions
 │   ├── pages/
 │   │   └── MapPage.ts               # Page Object with API interception
+│   ├── utils/
+│   │   └── ApiClient.ts             # Direct API client for API tests
 │   └── fixtures/
 │       └── test.ts                  # Dependency Injection setup
 ├── playwright.config.ts             # Multi-device test configuration
@@ -82,6 +87,12 @@ npm run bdd:generate
 # Run all tests (Desktop + Mobile)
 npm test
 
+# Run with DEMO_MODE enabled (uses mock fallback data)
+npm run test:demo
+
+# Run only API tests (no UI, fastest)
+npm run test:api
+
 # Run in headed mode (see browser)
 npm run test:headed
 
@@ -94,6 +105,11 @@ npm run test:smoke
 # Debug mode (step through with Playwright Inspector)
 npm run test:debug
 ```
+
+**DEMO_MODE Explained:**
+- When `DEMO_MODE=true`, the framework uses mock data (1500m distance, 300s duration) if the API returns geocoding responses instead of routing responses
+- Without DEMO_MODE, tests will fail with a descriptive error if mock data would be used
+- This prevents false positives in production while allowing demo flexibility
 
 ### View Reports
 ```bash
@@ -157,6 +173,23 @@ npm run report:allure
 - Assert either distance=0 or API error
 
 **Tags**: `@edge-case`, `@mobile`
+
+---
+
+### Scenario 5: Direct API Testing (No UI)
+**Business Value**: Validate OpenRouteService API contract directly—10x faster than UI tests.
+
+**Technical Approach**:
+- POST request to `/v2/directions/driving-car/json`
+- Assert response structure (distance, duration, waypoints)
+- Test different routing profiles (car, HGV, bicycle, walking)
+
+**Tags**: `@api`, `@smoke`
+
+**Test Pyramid Strategy**:
+- **API Tests**: Fast, stable, test business logic directly
+- **UI Tests**: Slower, test critical user workflows
+- Follows the 70% API / 30% UI ratio for optimal speed and coverage
 
 ---
 

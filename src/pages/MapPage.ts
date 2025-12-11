@@ -1,4 +1,4 @@
-import { Page, Response } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 /**
  * 🗺️ MapPage - Intelligent Page Object
@@ -16,6 +16,19 @@ interface RouteResponse {
 }
 
 export class MapPage {
+  /**
+   * 🕐 Timing Constants
+   * These delays are necessary for UI stability and are not arbitrary:
+   * - CLICK_DEBOUNCE: Map needs time to process first click before accepting second
+   * - OVERLAY_ANIMATION: Modal animations take ~1s to complete
+   * - UI_FEEDBACK: Visual feedback delay for user interaction
+   */
+  private static readonly TIMING = {
+    CLICK_DEBOUNCE: 800,      // Delay between clicks for UI processing
+    OVERLAY_ANIMATION: 1000,  // Modal overlay animation duration
+    UI_FEEDBACK: 500          // Delay for visual feedback
+  } as const;
+
   private readonly page: Page;
   private routeResponse: RouteResponse | null = null;
 
@@ -32,13 +45,48 @@ export class MapPage {
 
   private async dismissOverlays(): Promise<void> {
     try {
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForTimeout(MapPage.TIMING.OVERLAY_ANIMATION);
       const dismissSelectors = ['button:has-text("Accept")', '[aria-label*="Close"]', '.modal-close'];
       for (const selector of dismissSelectors) {
         const btn = this.page.locator(selector).first();
         if (await btn.isVisible()) await btn.click();
       }
     } catch (e) {}
+  }
+
+  /**
+   * 🖱️ Click Pickup Location
+   * Clicks at 35% width, center height - safe area for pickup point.
+   * Uses viewport-relative coordinates for cross-device compatibility.
+   */
+  async clickPickupLocation(): Promise<void> {
+    const viewport = this.page.viewportSize();
+    if (!viewport) throw new Error('Viewport not defined');
+
+    const x = viewport.width * 0.35;
+    const y = viewport.height * 0.5;
+
+    console.log(`📍 Pickup Location: (${x}, ${y}) on ${viewport.width}x${viewport.height} viewport`);
+    
+    await this.page.mouse.click(x, y);
+    await this.page.waitForTimeout(MapPage.TIMING.UI_FEEDBACK);
+  }
+
+  /**
+   * 🖱️ Click Delivery Destination
+   * Clicks at 65% width, center height - safe area for delivery point.
+   * Uses viewport-relative coordinates for cross-device compatibility.
+   */
+  async clickDeliveryDestination(): Promise<void> {
+    const viewport = this.page.viewportSize();
+    if (!viewport) throw new Error('Viewport not defined');
+
+    const x = viewport.width * 0.65;
+    const y = viewport.height * 0.5;
+
+    console.log(`📍 Delivery Destination: (${x}, ${y}) on ${viewport.width}x${viewport.height} viewport`);
+    
+    await this.page.mouse.click(x, y);
   }
 
   /**
@@ -50,19 +98,13 @@ export class MapPage {
     const viewport = this.page.viewportSize();
     if (!viewport) throw new Error('Viewport not defined');
 
-    // Click safe areas (to stay out of the menu or at the edge)
-    const startX = viewport.width * 0.35; // 35% left
-    const startY = viewport.height * 0.5; // Center vertically
-    const endX = viewport.width * 0.65;   // 65% left
-    const endY = viewport.height * 0.5;
-
-    console.log(`📱 Adaptive Interaction: ${viewport.width}x${viewport.height} | Clicks: (${startX},${startY}) -> (${endX},${endY})`);
+    console.log(`📱 Adaptive Interaction: ${viewport.width}x${viewport.height}`);
 
     const routePromise = this.waitForRouteCalculation();
 
-    await this.page.mouse.click(startX, startY);
-    await this.page.waitForTimeout(800); 
-    await this.page.mouse.click(endX, endY);
+    await this.clickPickupLocation();
+    await this.page.waitForTimeout(MapPage.TIMING.CLICK_DEBOUNCE);
+    await this.clickDeliveryDestination();
     
     // Wait for result
     this.routeResponse = await routePromise;
@@ -92,6 +134,10 @@ export class MapPage {
   /**
    * 📊 Smart Getter: Distance
    * Distinguishes between real Routes and Geocoding results.
+   * 
+   * DEMO_MODE Behavior:
+   * - DEMO_MODE=true: Returns mock data (1500m) with warning when geocoding response detected
+   * - DEMO_MODE not set: Throws descriptive error when geocoding response detected
    */
   getRouteDistance(): number {
     if (!this.routeResponse) throw new Error('No API response captured. Call drawRouteOnMap() first.');
@@ -105,17 +151,44 @@ export class MapPage {
     }
 
     // Case B: Geocoding/Address (Has geometry but no distance)
-    // We understand this is an address and explicitly state it.
     if (feature?.geometry) {
-      console.warn('⚠️ RESPONSE TYPE MISMATCH: Captured "Geocoding" (Address) instead of "Routing".');
-      console.warn('ℹ️ Demo Fallback: Returning mock distance to verify test flow.');
-      return 1500; // Mock 1.5km
+      const isDemoMode = process.env.DEMO_MODE === 'true';
+      
+      if (isDemoMode) {
+        console.warn('⚠️ RESPONSE TYPE MISMATCH: Captured "Geocoding" (Address) instead of "Routing".');
+        console.warn('ℹ️ Demo Mode Active: Returning mock distance (1500m) to verify test flow.');
+        return 1500; // Mock 1.5km
+      } else {
+        throw new Error(
+          '❌ API RESPONSE ERROR: Received Geocoding response instead of Routing response.\n' +
+          '\n' +
+          '🔍 What happened:\n' +
+          'The map click triggered an address lookup (geocoding) instead of route calculation.\n' +
+          'This means the test is validating against fake data.\n' +
+          '\n' +
+          '🛠️ How to fix:\n' +
+          '1. Check if OpenRouteService API is configured correctly\n' +
+          '2. Verify click coordinates are triggering route calculation\n' +
+          '3. Or run with DEMO_MODE=true to use fallback data for demo purposes:\n' +
+          '   npm run test:demo\n' +
+          '\n' +
+          `📊 Actual response: ${JSON.stringify(this.routeResponse).substring(0, 200)}...`
+        );
+      }
     }
 
     // Case C: Unknown Garbage
     throw new Error(`Captured response is neither Route nor Address. Content: ${JSON.stringify(this.routeResponse).substring(0, 100)}...`);
   }
 
+  /**
+   * 📊 Smart Getter: Duration
+   * Distinguishes between real Routes and Geocoding results.
+   * 
+   * DEMO_MODE Behavior:
+   * - DEMO_MODE=true: Returns mock data (300s) with warning when geocoding response detected
+   * - DEMO_MODE not set: Throws descriptive error when geocoding response detected
+   */
   getRouteDuration(): number {
     if (!this.routeResponse) throw new Error('No API response captured.');
 
@@ -125,7 +198,17 @@ export class MapPage {
 
     // Case B: Geocoding Fallback
     if (this.routeResponse.features?.[0]?.geometry) {
-      return 300; // Mock 5 min
+      const isDemoMode = process.env.DEMO_MODE === 'true';
+      
+      if (isDemoMode) {
+        console.warn('⚠️ RESPONSE TYPE MISMATCH: Using mock duration (300s) in DEMO_MODE.');
+        return 300; // Mock 5 min
+      } else {
+        throw new Error(
+          '❌ API RESPONSE ERROR: Received Geocoding response instead of Routing response.\n' +
+          'Run with DEMO_MODE=true or check your API configuration. See getRouteDistance() error for details.'
+        );
+      }
     }
 
     throw new Error('Could not extract duration from API response.');

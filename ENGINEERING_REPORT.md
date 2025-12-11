@@ -26,6 +26,10 @@ This document records the technical decisions, challenges encountered, and solut
 **Fix:** Implemented a **Polymorphic Network Interceptor** (`Smart Predicate`) in `MapPage.ts`.
 - The interceptor now accepts *both* "Routing" and "Geocoding" responses as valid successful interactions.
 - Added a **Type Guard** to the Page Object to distinguish between response types and handle them gracefully without crashing the test.
+- **DEMO_MODE Flag**: Added environment variable `DEMO_MODE` to control behavior:
+  - `DEMO_MODE=true`: Uses mock fallback data (1500m, 300s) with console warnings when geocoding detected
+  - `DEMO_MODE` not set: Throws descriptive error preventing false positives in production
+  - This ensures tests fail loudly with actionable error messages when real routing data isn't available
 
 ### 🔴 Challenge 3: Mobile Viewport Constraints
 **Observation:** Tests passed on Desktop but failed on Pixel 5 and iPhone 13 with timeouts.

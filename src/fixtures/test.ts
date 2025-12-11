@@ -1,5 +1,6 @@
 import { test as base } from 'playwright-bdd';
 import { MapPage } from '../pages/MapPage';
+import { ApiClient } from '../utils/ApiClient';
 
 /**
  * 🏗️ Test Fixtures - Dependency Injection for Clean Test Architecture
@@ -44,10 +45,17 @@ type CustomFixtures = {
   mapPage: MapPage;
   
   /**
+   * apiClient: Direct API access without UI
+   * - Used for API-layer testing (Test Pyramid middle layer)
+   * - Faster and more stable than UI tests
+   * - Available in all step definitions via { apiClient } parameter
+   */
+  apiClient: ApiClient;
+  
+  /**
    * FUTURE EXTENSIONS (commented for demo):
    * In a production framework, you'd add more fixtures here:
    * 
-   * apiClient: ApiClient;        // For API testing
    * dbHelper: DatabaseHelper;     // For data setup/teardown
    * authContext: AuthContext;     // For managing login sessions
    * testDataFactory: TestDataFactory; // For generating test data
@@ -107,27 +115,35 @@ export const test = base.extend<CustomFixtures>({
   },
 
   /**
-   * EXAMPLE: Additional fixture for API testing (commented for demo)
+   * apiClient Fixture Definition
    * 
-   * This shows how you'd add a fixture for direct API interaction
-   * Useful for hybrid UI + API testing strategies
+   * LIFECYCLE:
+   * 1. Before each test: Create new ApiClient instance with Playwright's request context
+   * 2. During test: Pass apiClient to step definitions
+   * 3. After test: Automatic cleanup (request context closes via Playwright)
+   * 
+   * SCOPE: Function-level (new instance per test)
+   * Each scenario gets a fresh ApiClient to avoid test pollution
+   * 
+   * PURPOSE:
+   * Enables API-layer testing without UI - faster, more stable, and follows Test Pyramid
    */
-  /*
   apiClient: async ({ request }, use) => {
-    const client = new ApiClient(request, {
-      baseURL: 'https://api.openrouteservice.org',
-      headers: {
-        'Authorization': `Bearer ${process.env.ORS_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const client = new ApiClient(request);
     
+    /**
+     * HANDOFF PHASE: Provide fixture to test
+     * The 'use' callback passes apiClient to step definitions
+     * Execution pauses here until the test completes
+     */
     await use(client);
     
-    // Cleanup: Close any hanging connections
-    await client.dispose();
+    /**
+     * TEARDOWN PHASE: Cleanup
+     * Playwright automatically closes the request context
+     * No explicit cleanup needed for ApiClient
+     */
   },
-  */
 
   /**
    * EXAMPLE: Database fixture for data-driven testing (commented for demo)

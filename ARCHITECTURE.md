@@ -6,6 +6,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    HORA Services Test Framework                  │
 │                  (OpenRouteService Demo)                         │
+│              *** Test Pyramid Architecture ***                   │
 └─────────────────────────────────────────────────────────────────┘
                                  │
                     ┌────────────┴────────────┐
@@ -13,49 +14,53 @@
                     │   Runner                │
                     └────────────┬────────────┘
                                  │
-                ┌────────────────┼────────────────┐
-                │                │                │
-          ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐
-          │  Desktop   │   │  iPhone   │   │  Pixel 5  │
-          │  Chrome    │   │  Safari   │   │  Chrome   │
-          │  (1920px)  │   │  (390px)  │   │  (393px)  │
-          └─────┬──────┘   └─────┬─────┘   └─────┬─────┘
-                │                │                │
-                └────────────────┼────────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   BDD Layer             │
-                    │   (playwright-bdd)      │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │  routing.feature        │
-                    │  (Gherkin Scenarios)    │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │  routing.steps.ts       │
-                    │  (Step Definitions)     │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │  Fixtures (DI)          │
-                    │  test.ts                │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │  MapPage (POM)          │
-                    │  - drawRouteOnMap()     │
-                    │  - waitForRouteCalc()   │
-                    └────────────┬────────────┘
-                                 │
-                ┌────────────────┼────────────────┐
-                │                │                │
-          ┌─────▼─────┐   ┌─────▼─────┐   ┌─────▼─────┐
-          │  UI Layer  │   │ Network   │   │  API      │
-          │  (Canvas)  │   │ Intercept │   │ Response  │
-          │  Coords    │   │ POST      │   │ JSON      │
-          └────────────┘   └───────────┘   └───────────┘
+                    ┌────────────┴────────────┐
+                    │                         │
+            ┌───────▼────────┐       ┌───────▼────────┐
+            │   UI TESTS     │       │   API TESTS    │
+            │   (Slow)       │       │   (Fast)       │
+            │   30% Coverage │       │   70% Coverage │
+            └───────┬────────┘       └───────┬────────┘
+                    │                        │
+         ┌──────────┼──────────┐             │
+         │          │          │             │
+    ┌────▼───┐ ┌───▼────┐ ┌──▼────┐   ┌────▼────────┐
+    │Desktop │ │iPhone  │ │Pixel 5│   │ ApiClient   │
+    │Chrome  │ │Safari  │ │Chrome │   │ (Direct API)│
+    │1920px  │ │390px   │ │393px  │   │ No Browser  │
+    └────┬───┘ └───┬────┘ └──┬────┘   └────┬────────┘
+         │         │         │              │
+         └─────────┼─────────┘              │
+                   │                        │
+         ┌─────────▼────────┐     ┌─────────▼────────┐
+         │  BDD Layer       │     │  BDD Layer       │
+         │  routing.feature │     │  api-routing     │
+         │  (UI Tests)      │     │  .feature        │
+         └─────────┬────────┘     └─────────┬────────┘
+                   │                        │
+         ┌─────────▼────────┐     ┌─────────▼────────┐
+         │ routing.steps.ts │     │ api-routing      │
+         │ (MapPage)        │     │ .steps.ts        │
+         └─────────┬────────┘     └─────────┬────────┘
+                   │                        │
+         ┌─────────▼────────┐     ┌─────────▼────────┐
+         │  Fixtures (DI)   │     │  Fixtures (DI)   │
+         │  mapPage fixture │     │  apiClient       │
+         └─────────┬────────┘     └─────────┬────────┘
+                   │                        │
+         ┌─────────▼────────┐     ┌─────────▼────────┐
+         │  MapPage.ts      │     │  ApiClient.ts    │
+         │  - UI clicks     │     │  - Direct HTTP   │
+         │  - Network hook  │     │  - No UI         │
+         └─────────┬────────┘     └─────────┬────────┘
+                   │                        │
+                   └─────────┬──────────────┘
+                             │
+                    ┌────────▼────────┐
+                    │ OpenRouteService│
+                    │ API             │
+                    │ /v2/directions  │
+                    └─────────────────┘
 ```
 
 ## Data Flow: From Gherkin to Assertion
@@ -105,6 +110,31 @@
    });
 ```
 
+## Test Pyramid Strategy
+
+### Why Two Test Layers?
+```
+        ▲
+       / \     UI Tests (30%)
+      /   \    - Slow (browser startup)
+     /_____\   - Test critical user flows
+    /       \  
+   /   API   \ API Tests (70%)
+  /   Tests   \- Fast (no browser)
+ /             \- Test business logic
+/_______________\- More stable
+```
+
+### Test Distribution
+| Layer | Speed | Count | Purpose |
+|-------|-------|-------|---------|
+| **UI Tests** | ~5s/test | 5 scenarios | Critical user journeys |
+| **API Tests** | ~0.5s/test | 15+ scenarios | Business logic, edge cases |
+
+### When to Use Each Layer
+- **UI Tests**: User clicks map, sees route visualization
+- **API Tests**: Validate distance calculations, routing algorithms, profiles
+
 ## Testing Strategy: UI vs API
 
 ### ❌ Traditional Approach (Flaky)
@@ -115,8 +145,13 @@ Test → Click Map → Wait for Visual Route → Assert Pin Color
 
 ### ✅ Our Approach (Stable)
 ```
+UI Tests:
 Test → Click Map → Intercept API → Assert JSON Response
        └─ SOLUTION: Validate business data, not pixels
+
+API Tests:
+Test → Direct HTTP POST → Assert JSON Response
+       └─ FASTEST: No browser, no UI, just data validation
 ```
 
 ## Key Architectural Patterns
@@ -218,11 +253,15 @@ Test Results (JSON)
 ```
 src/
 ├── features/
-│   └── routing.feature         # 1 feature
+│   ├── routing.feature         # UI tests (map interaction)
+│   └── api-routing.feature     # API tests (no UI)
 ├── pages/
-│   └── MapPage.ts              # 1 page object
+│   └── MapPage.ts              # Page Object for UI tests
+├── utils/
+│   └── ApiClient.ts            # HTTP client for API tests
 └── steps/
-    └── routing.steps.ts        # 1 step definition file
+    ├── routing.steps.ts        # UI test step definitions
+    └── api-routing.steps.ts    # API test step definitions
 ```
 
 ### Production State (Future)

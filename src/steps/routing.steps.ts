@@ -44,18 +44,17 @@ Given('I have opened the route planning map', async ({ mapPage }) => {
  * from a database of HORA Services locations.
  * 
  * TECHNICAL APPROACH:
- * - We don't click on a specific address (too brittle)
- * - We use consistent viewport coordinates (testable, reproducible)
+ * - We use viewport-relative coordinates (works on all device sizes)
+ * - MapPage.clickPickupLocation() handles adaptive positioning
  * - The API response is what matters, not the visual pin placement
  */
-When('I select a pickup location on the map', async ({ mapPage, page }) => {
+When('I select a pickup location on the map', async ({ mapPage }) => {
   /**
-   * CRITICAL: We setup the network listener here but don't wait yet
+   * ARCHITECTURAL NOTE: All UI interactions go through Page Object
    * This step only performs the FIRST click (pickup point)
    * The route calculation happens after BOTH points are selected
    */
-  await page.mouse.click(600, 400);
-  await page.waitForTimeout(500); // UI feedback delay
+  await mapPage.clickPickupLocation();
 });
 
 /**

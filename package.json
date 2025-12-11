@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "description": "Production-ready Test Automation Framework for HORA Services - OpenRouteService Demo",
   "main": "index.js",
-"scripts": {
+  "scripts": {
     "test": "playwright test --headed",
-    "test:ui": "playwright test --ui --headed", 
+    "test:demo": "cross-env DEMO_MODE=true playwright test --headed",
+    "test:api": "playwright test --grep @api",
+    "test:ui": "playwright test --ui --headed",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
     "test:mobile": "playwright test --project='Mobile Safari (iPhone 13)' --project='Mobile Chrome (Pixel 5)' --headed",
@@ -31,6 +33,7 @@
     "@types/node": "^22.0.0",
     "allure-commandline": "^2.29.0",
     "allure-playwright": "^3.0.0",
+    "cross-env": "^7.0.3",
     "eslint": "^8.57.0",
     "playwright-bdd": "^7.0.0",
     "prettier": "^3.3.0",
